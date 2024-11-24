@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Screen Recorder</title>
+  <style>
+    body {
+      color: #eee;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-image:
+        repeating-linear-gradient(
+          to right, #2d2a44 0 1px, transparent 2px 200px
+        ),
+        repeating-linear-gradient(
+          to bottom, #2d2a44 0 1px, transparent 2px 200px
+        ),
+        radial-gradient(
+          at 50% 50%, #2d2a44, #1d1b34
+        );
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .banner {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .banner #dotsCanvas {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .banner h1 {
+      font-size: 3rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      line-height: 1.2;
+      margin-bottom: 20px;
+      --gradient-direction: to left;
+      background-image: linear-gradient(
+        var(--gradient-direction),
+        #89a5df,
+        #e46e7f,
+        #e8e191
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: gradient-shift 3s linear infinite;
+      z-index: 2;
+      position: relative;
+    }
+
+    .banner h1.right {
+      --gradient-direction: to right;
+    }
+
+    @keyframes gradient-shift {
+      0% {
+        background-position: 0%;
+      }
+      100% {
+        background-position: 100%;
+      }
+    }
+
+    button {
+      margin: 10px;
+      padding: 12px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      background-color: #1abc9c;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+      z-index: 2;
+      position: relative;
+    }
+
+    button:disabled {
+      background-color: #95a5a6;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #16a085;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    a#download {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      text-decoration: none;
+      background-color: #3498db;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      z-index: 2;
+      position: relative;
+    }
+    a {
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #ffffff;
+      text-decoration: none;
+      background-color: #3498db;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+      z-index: 2;
+      position: relative;
+    }
+    a#download:hover {
+      background-color: #2980b9;
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    video {
+      margin-top: 20px;
+      max-width: 80%;
+      height: auto;
+      border: 3px solid #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+      z-index: 2;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <div class="banner">
+    <h1 class="left">Screen Recorder</h1>
+    <h1 class="right">With Spider-Man Effects</h1>
+    <button id="start">Start Recording</button>
+    <button id="stop" disabled>Stop Recording</button>
+    <a id="download" style="display: none;" download="recording.webm">Download Recording</a>
+    <a id="download-mp4" style="display: none;" download="recording.mp4">Download as MP4</a>
+    <a id="download-webm" style="display: none;" download="recording.webm">Download as WebM</a>
+    <video id="preview" autoplay muted controls></video>
+    <canvas id="dotsCanvas"></canvas>
+  </div>
+
+  <script>
+    // Spider-Man Background Effect
+    let banner = document.querySelector('.banner');
+    let canvas = document.getElementById('dotsCanvas');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    const ctx = canvas.getContext('2d');
+    let dots = [];
+    const arrayColors = ['#eee', '#545454', '#596d91', '#bb5a68', '#696541'];
+
+    for (let index = 0; index < 50; index++) {
+      dots.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 3 + 5,
+        color: arrayColors[Math.floor(Math.random() * 5)],
+      });
+    }
+
+    const drawDots = () => {
+      dots.forEach(dot => {
+        ctx.fillStyle = dot.color;
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    };
+
+    drawDots();
+
+    banner.addEventListener('mousemove', (event) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawDots();
+
+      const mouse = {
+        x: event.pageX - banner.getBoundingClientRect().left,
+        y: event.pageY - banner.getBoundingClientRect().top,
+      };
+
+      dots.forEach(dot => {
+        const distance = Math.sqrt((mouse.x - dot.x) ** 2 + (mouse.y - dot.y) ** 2);
+        if (distance < 300) {
+          ctx.strokeStyle = dot.color;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(dot.x, dot.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.stroke();
+        }
+      });
+    });
+
+    banner.addEventListener('mouseout', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawDots();
+    });
+
+    window.addEventListener('resize', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.width = banner.offsetWidth;
+      canvas.height = banner.offsetHeight;
+
+      dots = [];
+      for (let index = 0; index < 50; index++) {
+        dots.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          size: Math.random() * 3 + 5,
+          color: arrayColors[Math.floor(Math.random() * 5)],
+        });
+      }
+      drawDots();
+    });
+
+    // Screen Recorder Functionality
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+    const downloadLink = document.getElementById('download');
+    const downloadMp4 = document.getElementById('download-mp4');
+    const downloadWebM = document.getElementById('download-webm');
+    const previewVideo = document.getElementById('preview');
+
+    let mediaRecorder;
+    let recordedChunks = [];
+    let screenStream;
+
+    const createDownloadLinks = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+
+      // MP4 Link Creation (simulated)
+      const mp4Blob = new Blob(recordedChunks, { type: 'video/mp4' });
+      const mp4Url = URL.createObjectURL(mp4Blob);
+      downloadMp4.href = mp4Url;
+      downloadMp4.style.display = 'inline';
+
+      // WebM Link Creation
+      const webmUrl = URL.createObjectURL(blob);
+      downloadWebM.href = webmUrl;
+      downloadWebM.style.display = 'inline';
+    };
+
+    startButton.addEventListener('click', async () => {
+      try {
+        screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+        previewVideo.srcObject = screenStream;
+
+        mediaRecorder = new MediaRecorder(screenStream);
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          createDownloadLinks();
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          previewVideo.srcObject = null;
+          previewVideo.src = url;
+          downloadLink.href = url;
+          downloadLink.style.display = 'inline';
+        };
+
+        mediaRecorder.start();
+        startButton.disabled = true;
+        stopButton.disabled = false;
+      } catch (error) {
+        alert('Failed to start screen recording. Please try again.');
+      }
+    });
+
+    stopButton.addEventListener('click', () => {
+      mediaRecorder.stop();
+      screenStream.getTracks().forEach(track => track.stop());
+      startButton.disabled = false;
+      stopButton.disabled = true;
+    });
+  </script>
+</body>
+</html>
